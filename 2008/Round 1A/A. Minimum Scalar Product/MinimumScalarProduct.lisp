@@ -6,9 +6,9 @@
 ;; Algorithmic solution in Common Lisp.
 ;; Author: Sergey Dymchenko <kit1980@gmail.com>
 ;;
-;; SBCL 1.0.29.11 - http://www.sbcl.org/
+;; SBCL 1.0.29 - http://www.sbcl.org/
 ;; Usage:
-;; sbcl --load MinimumScalarProduct.lisp --eval "(sb-ext:save-lisp-and-die \"MinimumScalarProduct_lisp\" :executable t :toplevel 'main)" > /dev/null && ./MinimumScalarProduct_lisp < in-file > out-file
+;; sbcl --noinform --load MinimumScalarProduct.lisp --eval "(main)" < in-file > out-file
 
 (defun dot-product (x y)
   (reduce '+ (mapcar '* x y)) )
