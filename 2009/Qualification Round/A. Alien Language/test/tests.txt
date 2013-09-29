@@ -1,0 +1,25 @@
+compile-run AlienLanguage-regex.lisp
+
+<
+3 5 4
+abc
+bca
+dac
+dbc
+cba
+(ab)(bc)(ca)
+abc
+(abc)(abc)(abc)
+(zyx)bc
+>
+Case #1: 2
+Case #2: 1
+Case #3: 3
+Case #4: 0
+
+< cat test/A-small-practice.in
+> cat test/A-small-practice.out
+
+< cat test/A-large-practice.in
+> cat test/A-large-practice.out
+
