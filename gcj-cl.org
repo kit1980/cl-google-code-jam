@@ -1,0 +1,360 @@
+#+TITLE: Solving Google Code Jam problems in Common Lisp
+#+AUTHOR: Sergii Dymchenko
+#+EMAIL: kit1980@gmail.com
+#+DATE: {{{modification-time(%Y-%m-%d)}}}
+#+OPTIONS: num:nil toc:nil
+
+[[https://code.google.com/codejam][Google Code Jam]] is one of the
+biggest programming competitions in the world - in 2013 there were over 45000
+registrants, of which more than 21000 were able to solve correctly at least one problem input 
+(typically, a Code Jam problem is tested on two sets of input data - "small" and "large"). 
+
+For me, the best thing about this particular contest is
+that any (freely available) programming language or system can be used
+for solving problems. Most competitors use C++ or Java, though.
+
+From my (rather limited) Common Lisp experience and some experience with programming competitions I think that Lisp can be successfully used in contests in general,
+and in Google Code Jam in particular.
+
+In this article I present Common Lisp solutions to several Google Code Jam problems, 
+demonstrate various aspects of Common Lisp usage in context of coding competitions
+and highlight some language features and libraries useful for programming contests.
+
+Goals of the article include persuading more programming contests participants try Common Lisp 
+and also luring more seasoned Lisp programmers into programming contests.
+
+Lisp already has some limited presence in Code Jam and almost all of the problems from this article have correct submitted solutions in Lisp
+(http://www.go-hero.net/jam site can be used to find submitted solutions in different programming languages). 
+I tried to make my solutions a bit better engineered that solutions done in a hurry of the real contest: 
+by using modern features like [[http://www.quicklisp.org/][Quicklisp]], 
+using standard input/output instead of hard-coded file names, more granular code, etc. I provide links to other peoples' Lisp solutions through the article.
+
+I tried to make coding style of the presented solutions reflect specifics of programming contests (without sacrificing readability too much)
+ and multi-paradigm nature of Common Lisp. 
+For example, LOOP macro is used extensively in every program except for one, which is meant to be an illustration of a more functional programming style.
+
+I chose one particular Common Lisp implementation - [[http://www.sbcl.org/][Steel Bank Common Lisp]], which is popular, stable and fast.
+All programs were tested using SBCL 1.0.29, but should also work with other versions and standard-compliant Common Lisp implementations.
+
+* Problems
+
+** Minimum Scalar Product 
+   | Problem link        | [[https://code.google.com/codejam/contest/32016/dashboard#s=p0][Minimum Scalar Product]]                                                                           |
+   | Full source         | [[https://github.com/kit1980/cl-google-code-jam/blob/master/2008/Round%201A/A.%20Minimum%20Scalar%20Product/MinimumScalarProduct.lisp][MinimumScalarProduct.lisp]] |
+   | More Lisp solutions | http://www.go-hero.net/jam/08/solutions/1/1/Lisp                                                                                                                   |
+
+   This is a very easy problem from Round 1A 2008. 
+
+   It's not too hard to come up with a solution, and the implementation is very simple: just sort two lists and take their scalar product.
+
+#+BEGIN_SRC common-lisp 
+(defun dot-product (x y)
+  (reduce '+ (mapcar '* x y)) )
+
+(defun min-product (x y)
+  (dot-product (sort x #'<) (sort y #'>)) )
+
+(defun do-case (case-num x y)
+  (format t "Case #~a: ~a~%" case-num (min-product x y)) )
+
+(defun main ()
+  (loop for case-num from 1 to (read) do
+       (let (n x y)
+         (setf n (read))
+         (setf x (loop repeat n collect (read)))
+         (setf y (loop repeat n collect (read)))
+         (do-case case-num x y) ) ) )
+#+END_SRC
+
+** Speaking in Tongues
+   | Problem link        | [[https://code.google.com/codejam/contest/1460488/dashboard#s=p0][Speaking in Tongues]]                                                                                               |
+   | Full source         | [[https://github.com/kit1980/cl-google-code-jam/blob/master/2012/Qualification%20Round/A.%20Speaking%20in%20Tongues/SpeakingInTongues.lisp][SpeakingInTongues.lisp]]                                                                                                                                                                                                                                                                               |
+   | More Lisp solutions | http://www.go-hero.net/jam/12/solutions/0/1/Lisp                                                                                                                                                                                                                   |
+
+This is the easiest problem from Qualification Round 2012. 
+
+This problem is very unusual for Google Code Jam because it has only small input instead of usual small plus large inputs.
+
+My solution demonstrates some aspects of working with strings and hash tables in Common Lisp.
+
+#+BEGIN_SRC common-lisp 
+;; Additionally to the sample input/output,
+;; figure 'q' -> 'z' (Googlerese -> English) mapping from the problem statement.
+;; Finally, 'z' -> 'q' is the only left possibility.
+(defparameter *in-sample* "
+ejp mysljylc kd kxveddknmc re jsicpdrysi
+rbcpc ypc rtcsra dkh wyfrepkym veddknkmkrkcd
+de kr kd eoya kw aej tysr re ujdr lkgc jv
+qz
+")
+(defparameter *out-sample* "
+our language is impossible to understand
+there are twenty six factorial possibilities
+so it is okay if you want to just give up
+zq
+")
+
+(defparameter *mapping* (make-hash-table :test #'equal))
+
+(defun initialize-mapping ()
+  (loop for in-char across *in-sample* for out-char across *out-sample* do
+       (setf (gethash in-char *mapping*) out-char) ) )
+
+(defun translate (in-string)
+  (concatenate 'string
+               (loop for in-char across in-string collect
+                    (gethash in-char *mapping*) ) ) )
+
+(defun do-case (case-num in-string)
+  (format t "Case #~a: ~a~%" case-num (translate in-string)) )
+
+(defun main ()
+  (initialize-mapping)
+  (loop for case-num from 1 to (read) do
+       (let (in-string)
+         (setf in-string (read-line))
+         (do-case case-num in-string) ) ) )
+#+END_SRC
+
+** Alien Language
+   | Problem link        | [[https://code.google.com/codejam/contest/90101/dashboard#s=p0][Alien Language]]                                                                                  |
+   | Full source         | [[https://github.com/kit1980/cl-google-code-jam/blob/master/2009/Qualification%20Round/A.%20Alien%20Language/AlienLanguage-regex.lisp][AlienLanguage-regex.lisp]] |
+   | More Lisp solutions | http://www.go-hero.net/jam/09/solutions/0/1/Lisp                                                                                                               |
+
+   This is an easy problem from Qualification Round 2009. 
+
+   A pure algorithmic solution for the problem is not too easy to come up with, but the regular expressions-based solution is almost obvious:
+   just replace parentheses in the input with square brackets and treat the result as a regex pattern.
+
+   There is a great regex library for Common Lisp - [[http://weitz.de/cl-ppcre][cl-ppcre]], so let's use it!
+
+#+BEGIN_SRC common-lisp 
+(ql:quickload :cl-ppcre)
+(use-package :cl-ppcre)
+
+(defparameter *words* nil)
+
+(defun replace-brackets (pattern)
+  (regex-replace-all "\\)" (regex-replace-all "\\(" pattern "[") "]") )
+
+(defun count-matches (pattern)
+  (let ((scanner (create-scanner pattern)))
+    (loop for word in *words* sum
+         (if (scan scanner word) 1 0) ) ) )
+
+(defun do-case (case-num pattern)
+  (format t "Case #~a: ~a~%" case-num (count-matches (replace-brackets pattern))) )
+
+(defun main ()
+  (let (d n)
+    (read) ; consume redundant value of L
+    (setf d (read))
+    (setf n (read))
+    (dotimes (i d) (push (read-line) *words*)) ; words are reversed, but it doesn't matter
+    (loop for case-num from 1 to n do
+         (let (pattern)
+           (setf pattern (read-line))
+           (do-case case-num pattern) ) ) ) )
+#+END_SRC
+
+** Fair Warning
+   | Problem link        | [[https://code.google.com/codejam/contest/433101/dashboard#s=p1][Fair Warning]]                                                                                                                                                                                            |
+   | Full source         | [[https://github.com/kit1980/cl-google-code-jam/blob/master/2010/Qualification%20Round/B.%20Fair%20Warning/FairWarning.lisp][FairWarning.lisp]]                                                                                                                                                                                                                                                                                                     |
+   | More Lisp solutions | http://www.go-hero.net/jam/10/solutions/0/2/Lisp                                                                                                                                                                                                                                                                                                                                                                   |
+
+   This problem from Qualification Round 2010 (the hardest from the round) was the first Code Jam problem that required bignum arithmetic support. 
+   
+   Common Lisp is very handy for solving this problem because it supports bignum arithmetic out of the box;
+   having standard greatest common divisor function also helps.
+
+   The solution I wrote for this particular problem uses a more functional programming style, 
+   and [[http://common-lisp.net/project/iterate/][iterate]] is used instead of LOOP macro to stress this.
+
+   Also the program (ab)uses the fact that Common Lisp is a Lisp-2 and has a separate function namespace, 
+   so it's ok to have variables with the same names as functions (min, gcd, rem).
+
+#+BEGIN_SRC common-lisp 
+(ql:quickload :iterate)
+(use-package :iterate)
+
+(defun substract-val (items val)
+  (mapcar #'(lambda (x) (- x val)) items) )
+
+(defun first-optimum (events)
+  (let* ((min (reduce #'min events))
+         (gcd (reduce #'gcd (substract-val events min)))
+         (rem (rem min gcd)) )
+    (if (zerop rem) 0 (- gcd rem)) ) )
+    
+(defun do-case (case-num events)
+  (format t "Case #~a: ~a~%" case-num (first-optimum events)) )
+
+(defun main ()
+  (iterate (for case-num from 1 to (read))
+           (let (n events)
+             (setf n (read))
+             (setf events (iterate (repeat n) (collect (read))))
+             (do-case case-num events) ) ) )
+#+END_SRC
+
+** Triangle Areas
+   | Problem link        | [[https://code.google.com/codejam/contest/32001/dashboard#s=p1][Triangle Areas]]                                                          |
+   | Full source         | [[https://github.com/kit1980/cl-google-code-jam/blob/master/2008/Round%202/B.%20Triangle%20Areas/TriangleAreas.lisp][TriangleAreas.lisp]] |
+   |                     | [[https://github.com/kit1980/cl-google-code-jam/blob/master/2008/Round%202/B.%20Triangle%20Areas/TriangleAreas.ecl][TriangleAreas.ecl]]   |
+   | More Lisp solutions | http://www.go-hero.net/jam/08/solutions/4/2/Lisp (small input only)                                                                                                                       |
+
+This is a relatively difficult problem from Round 2 2008. 
+
+Prolog-based [[http://www.eclipseclp.org/][ECLiPSe]] Constraint Programming System does all the real job in my solution. 
+Prolog program is almost direct translation of the problem statement, so ECLiPSe is very well suited for this problem.
+
+Common Lisp is used as a scripting language with a little help from [[http://common-lisp.net/project/trivial-shell/][trivial-shell]].
+Basically, the Lisp program just translates every input line to Prolog-friendly format and calls ECLiPSe.
+
+#+BEGIN_SRC common-lisp 
+(ql:quickload :trivial-shell)
+
+(defun prologify (items)
+  (format nil "[~{~A~^, ~}].~%" items) )
+
+(defun run-eclipse (input)
+  (trivial-shell:shell-command "eclipse -f TriangleAreas.ecl -e main" :input input) )
+
+(defun main ()
+  (format t (run-eclipse (with-output-to-string (str)
+                           (let (c)
+                             (setf c (read))
+                             (format str (prologify (list c)))
+                             (loop for case-num from 1 to c do
+                                  (let (n m a)
+                                    (setf n (read))
+                                    (setf m (read))
+                                    (setf a (read))
+                                    (format str (prologify (list n m a))) ) ) ) ) ) ) )
+#+END_SRC
+
+#+BEGIN_SRC eclipse
+  :- lib(ic).
+  
+  % Triangle's area * 2
+  area2(X1, Y1, X2, Y2, X3, Y3, A) :- 
+      A #= abs(
+          X1 * Y2 - X1 * Y3 + 
+          X2 * Y3 - X2 * Y1 + 
+          X3 * Y1 - X3 * Y2
+      ).
+  
+  model(N, M, A, [X1, Y1, X2, Y2, X3, Y3]) :-
+      [X1, X2, X3] :: 0..N,
+      [Y1, Y2, Y3] :: 0..M,
+      X1 #= 0, Y1 #= 0, % we can safely put one point in (0, 0)
+      area2(X1, Y1, X2, Y2, X3, Y3, A).
+  
+  do_case(Case_num, N, M, A) :-
+      printf("Case #%w: ", [Case_num]),
+      ( model(N, M, A, Points), labeling(Points) ->
+          printf("%w %w %w %w %w %w", Points)
+      ; 
+          write("IMPOSSIBLE") 
+      ),
+      nl.
+  
+  main :-
+      read([C]), 
+      ( for(Case_num, 1, C) do 
+          read([N, M, A]),
+          do_case(Case_num, N, M, A) ).
+#+END_SRC
+
+** Bullseye
+   | Problem link        | [[https://code.google.com/codejam/contest/2418487/dashboard#s=p0][Bullseye]]                                                                                                                                          |
+   | Full source         | [[https://github.com/kit1980/cl-google-code-jam/blob/master/2013/Round%201A/A.%20Bullseye/Bullseye.lisp][Bullseye.lisp]] |
+   | More Lisp solutions | http://www.go-hero.net/jam/13/solutions/1/1/Lisp                                                                                                                                                |
+
+This is the easiest problem from Round 1A 2013.
+
+The problem exercises a standard programming contest idea - binary search.
+
+My Lisp solution for this problem is probably the most unlispy of the programs in this article because of using infix math syntax. 
+Prefix math syntax can be too verbose for this kind of programs, 
+and infix syntax simplified translating my Python solution to Common Lisp tremendously.
+
+Common Lisp's bignum arithmetic support also helps in this problem.
+
+#+BEGIN_SRC common-lisp 
+(ql:quickload :infix)
+
+(defun paint (r n)
+    #I(2*r*n + 2*n*n - n) )
+
+(defun find-max (r paint)
+  (let (min_n max_n med_n)
+    #I(min_n = 0)
+    #I(max_n = paint + 1)
+    (loop do
+         #I(med_n = ((max_n - min_n) >> 1) + min_n)
+         (if #I(paint(r, med_n) <= paint)
+             #I(min_n = med_n)
+             #I(max_n = med_n) )
+       while #I(max_n - min_n > 1) )
+    min_n ) )
+
+(defun do-case (case-num r paint)
+  (format t "Case #~a: ~a~%" case-num (find-max r paint)) )
+
+(defun main ()
+  (loop for case-num from 1 to (read) do
+       (let (r paint)
+         (setf r (read))
+         (setf paint (read))
+         (do-case case-num r paint) ) ) )
+#+END_SRC
+
+** Rope Intranet
+   | Problem link        | [[http://code.google.com/codejam/contest/619102/dashboard#s=p0][Rope Intranet]]                                                         |
+   | Full source         | [[https://github.com/kit1980/cl-google-code-jam/blob/master/2010/Round%201C/A.%20Rope%20Intranet/RopeIntranet.lisp][RopeIntranet.lisp]] |
+   | More Lisp solutions | http://www.go-hero.net/jam/10/solutions/3/1/Lisp                                                                                                                                        |
+
+This is an easy problem from Round 1C 2010.
+
+The problem's constraints are low enough to allow \Omicron(n^2) solutions. 
+
+I use [[https://github.com/Ramarren/cl-geometry][cl-geometry]] library to check whether two line segments intersect.
+Using the library for such a simple task is of course an overkill, but cl-geometry has plenty of useful functions that can be handy in solving other problems.
+
+My solution also demonstrates some simple aspects of using Common Lisp Object System.
+
+#+BEGIN_SRC common-lisp 
+(ql:quickload :cl-geometry)
+(use-package :2d-geometry)
+
+(defun count-intersections (a-list b-list)
+  (let (n a b)
+    (setf n (length a-list))
+    (setf a (make-array n :initial-contents a-list))
+    (setf b (make-array n :initial-contents b-list))
+    (loop for i from 0 below n sum
+      (loop for j from (1+ i) below n sum
+           (let (li lj inter)
+             (setf li (make-instance 'line-segment
+                                     :start (make-instance 'point :x 0 :y (aref a i))
+                                     :end (make-instance 'point :x 1 :y (aref b i)) ))
+             (setf lj (make-instance 'line-segment
+                                     :start (make-instance 'point :x 0 :y (aref a j))
+                                     :end (make-instance 'point :x 1 :y (aref b j)) ))
+             (setf inter (line-segments-intersection-point li lj))
+             (if inter 1 0)) ) ) ) )
+
+(defun do-case (case-num a b)
+  (format t "Case #~a: ~a~%" case-num (count-intersections a b)) )
+
+(defun main ()
+  (loop for case-num from 1 to (read) do
+       (let (n a b)
+         (setf n (read))
+         (dotimes (i n)
+              (push (read) a)
+              (push (read) b) )
+         ; items in a & b are reversed, but it doesn't matter
+         (do-case case-num a b) ) ) )
+#+END_SRC

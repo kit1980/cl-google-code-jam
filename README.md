@@ -1,4 +1,4 @@
 cl-google-code-jam
 ==================
 
-Solutions to Google Code Jam problems in Common Lisp
+Solving Google Code Jam problems in Common Lisp
