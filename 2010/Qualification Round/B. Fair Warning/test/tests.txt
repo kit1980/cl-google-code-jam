@@ -1,0 +1,17 @@
+compile-run FairWarning.lisp
+
+<
+3
+3 26000000 11000000 6000000
+3 1 10 11
+2 800000000000000000001 900000000000000000001
+>
+Case #1: 4000000
+Case #2: 0
+Case #3: 99999999999999999999
+
+< cat test/B-small-practice.in
+> cat test/B-small-practice.out
+
+< cat test/B-large-practice.in
+> cat test/B-large-practice.out
