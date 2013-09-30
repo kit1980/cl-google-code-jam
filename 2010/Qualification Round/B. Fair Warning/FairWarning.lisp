@@ -7,9 +7,13 @@
 ;; Author: Sergey Dymchenko <kit1980@gmail.com>
 ;;
 ;; SBCL 1.0.29 - http://www.sbcl.org/
+;; Quicklisp - http://www.quicklisp.org/
+;; iterate - http://common-lisp.net/project/iterate/
 ;; Usage:
 ;; sbcl --noinform --load FairWarning.lisp --eval "(main)" < in-file > out-file
 
+(ql:quickload :iterate)
+(use-package :iterate)
 
 (defun substract-val (items val)
   (mapcar #'(lambda (x) (- x val)) items) )
@@ -24,8 +28,8 @@
   (format t "Case #~a: ~a~%" case-num (first-optimum events)) )
 
 (defun main ()
-  (loop for case-num from 1 to (read) do
-       (let (n events) 
-         (setf n (read))
-         (setf events (loop repeat n collect (read)))
-         (do-case case-num events) ) ) )
+  (iterate (for case-num from 1 to (read))
+           (let (n events) 
+             (setf n (read))
+             (setf events (iterate (repeat n) (collect (read))))
+             (do-case case-num events) ) ) )
